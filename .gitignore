@@ -1,0 +1,16 @@
+# Local Pi runtime state
+.atl/
+
+# Publication allowlist: ignore everything else at the repository root.
+/*
+!/.gitignore
+!/README.md
+!/BORRADOR_TP_GESTION_TICKETS.md
+!/src/
+
+# Traverse only the required directories; never expose runtime contents.
+/src/*
+!/src/mantis/
+/src/mantis/*
+!/src/mantis/docker-compose.yml
+!/src/mantis/leame.txt

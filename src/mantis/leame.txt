@@ -1,0 +1,120 @@
+LABORATORIO PROPUESTO DE MANTISBT CON DOCKER COMPOSE
+
+Estado: BORRADOR; prueba funcional básica auxiliar completada, no TP completo.
+En WSL Ubuntu (Docker 29.5.3, Compose 5.1.4), la comparación aislada
+tp-gestion-tickets-native-validation alcanzó esquema 213 y acceso autenticado.
+El Compose final se aplicó a esa comparación nativa existente; config --quiet,
+up -d y ps fueron satisfactorios. Un único ticket sintético SMOKE-TP-001 (ID 1)
+en el proyecto privado auxiliar VALIDACION-TP-Ventas (ID 1) permitió comprobar
+notas, historial, adjunto TXT de 81 bytes con descarga coincidente, resolución
+(80) y cierre (90). Tras recrear sólo el contenedor de la aplicación persistieron
+acceso, estado 90, bytes del adjunto y diez entradas de historial.
+Las ocho actividades académicas, sus diez registros y evidencias siguen
+pendientes; este ticket no es INC-01 a INC-10 ni reemplaza las dos reservas.
+No se probaron roles, campos personalizados, SMTP, reporte anónimo ni
+restablecimiento de contraseña. Los comandos siguientes son instrucciones para
+un clon nuevo, no una transcripción de pruebas.
+
+1. Requisitos y ubicación
+Usar Bash en WSL con Docker Engine y el complemento Docker Compose disponibles
+para esa distribución. Verificar permisos, puerto 8989 libre y autorización para
+descargar imágenes. Desde la raíz del repositorio clonado:
+
+    cd src/mantis
+
+2. Parámetros sólo en memoria del proceso
+No crear ni usar archivos de credenciales. No publicar contraseñas, capturas con
+secretos, datos de base ni configuración generada. En Bash, introducir dos
+contraseñas propias y distintas mediante entrada oculta:
+
+    read -rsp 'Contraseña SQL administrativa: ' MYSQL_ROOT_PASSWORD; printf '\n'
+    read -rsp 'Contraseña SQL de la aplicación: ' MYSQL_PASSWORD; printf '\n'
+    export MYSQL_ROOT_PASSWORD MYSQL_PASSWORD
+    export MYSQL_DATABASE=bugtracker MYSQL_USER=mantisbt
+
+Las contraseñas vacías son rechazadas por la interpolación requerida de Compose.
+MYSQL_DATABASE y MYSQL_USER son parámetros no secretos; si se cambian, usar esos
+mismos valores en el instalador. No confundir el usuario SQL con una cuenta de
+administración de MantisBT.
+
+3. Comandos propuestos (misma terminal Bash)
+
+    docker compose --env-file /dev/null config --quiet
+    docker compose --env-file /dev/null up -d
+    docker compose --env-file /dev/null ps
+
+Usar --env-file /dev/null en cada comando evita la lectura implícita de .env.
+No ejecutar config sin --quiet para evitar mostrar valores interpolados.
+Las variables sólo viven en esta sesión y sus procesos descendientes: deben
+proporcionarse de nuevo al abrir otra terminal o antes de comandos posteriores
+si ya se retiraron del entorno. Al terminar los comandos que las necesitan:
+
+    unset MYSQL_ROOT_PASSWORD MYSQL_PASSWORD MYSQL_DATABASE MYSQL_USER
+
+No se garantiza que una base recién iniciada esté lista de inmediato. Si hay
+fallos, revisar el estado sin publicar registros que puedan contener secretos.
+
+4. Instalación propuesta y acceso
+Abrir http://localhost:8989 en el equipo anfitrión. El servicio SQL es mysql;
+el nombre de base es MYSQL_DATABASE (por defecto bugtracker), el usuario SQL es
+MYSQL_USER (por defecto mantisbt) y su contraseña es la ingresada como
+MYSQL_PASSWORD. Seleccionar la zona horaria de Argentina y esa URL local según
+la versión instalada. No asumir que siempre hacen falta credenciales SQL root:
+consultar los requisitos del instalador antes de otorgar privilegios adicionales.
+
+Consultar privadamente la documentación del proveedor para las credenciales
+iniciales de acceso a MantisBT y cambiarlas de inmediato. La identidad de
+administración de MantisBT es distinta de MYSQL_USER y de la administración SQL.
+No copiar contraseñas ni credenciales iniciales en el repositorio o las evidencias.
+La cuenta inicial usada en la prueba quedó sin endurecer, sólo en loopback:
+cambiar sus credenciales antes de cualquier uso futuro.
+
+La plantilla habilita MANTIS_ENABLE_ADMIN; revisar su alcance en la imagen real
+y deshabilitar o restringir el instalador y las funciones administrativas al
+terminar, conforme a la documentación de esa versión. No exponer el laboratorio
+a Internet ni tratar esta plantilla como despliegue de producción.
+
+5. Persistencia y versiones
+Se conservan mantisbt (xlrl/mantisbt:latest) y mysql (mariadb:latest).
+El puerto 127.0.0.1:8989:80 limita la publicación a loopback del anfitrión Docker;
+en WSL comprobar el acceso local efectivo, sin ampliar la escucha a la red.
+La plantilla original fue adaptada; no se conserva como copia sin cambios.
+Los montajes actuales son:
+- mysql_data:/var/lib/mysql (volumen nativo de datos SQL)
+- mantis_config:/var/www/html/config (volumen nativo de configuración)
+- ./custom:/var/www/html/custom (bind opcional relativo a esta carpeta, ignorado;
+  no es necesario para campos personalizados administrados desde MantisBT)
+
+mysql_data y mantis_config se declaran también como volúmenes al nivel superior
+de Compose, con las mismas claves que la comparación aislada. Docker administra
+estos volúmenes fuera del repositorio: no se versionan, persisten al recrear
+contenedores y sus nombres efectivos dependen del proyecto Compose elegido.
+Los datos y la configuración generada no se publican; persistir no es respaldar.
+Recrear contenedores o cambiar variables de inicialización SQL no rota las
+contraseñas de una base ya existente. No ejecutar down -v ni eliminar datos
+anteriores para resolver diferencias: planificar cambios y respaldos autorizados.
+
+En la prueba inicial, el bind SQL en /mnt/d (v9fs) con mariadb:latest 13.0.2 falló
+en esquema 191 al crear un índice único: InnoDB no pudo renombrar un archivo de
+tabla. Una comparación NUEVA con las mismas imágenes y volúmenes nativos de SQL
+y configuración alcanzó esquema 213 y la página de acceso HTTP 200. No demuestra
+causalidad general ni validación funcional completa. Los datos anteriores se
+preservaron; la comparación nueva no requirió migración.
+Las etiquetas latest no fijan versiones ni garantizan compatibilidad. Registrar
+las versiones efectivas y probar la combinación antes de darla por operativa.
+
+6. Límites y evidencia pendiente
+El acceso sin autenticar redirigió al login sin exponer el resumen del ticket;
+esto no valida la función de reporte anónimo. No se enviaron correos reales ni
+se crearon o accedieron archivos .env. No se afirma una versión exacta de MantisBT.
+Comprobar roles, campos personalizados, informes, SMTP, reporte anónimo y
+recuperación con datos ficticios. La persistencia observada se limita a recrear
+el contenedor de aplicación; no demuestra recreación de la base ni recuperación
+de respaldos. No se aportan capturas nuevas ni se convierten las diez incidencias
+propuestas en casos probados. Consultar el borrador para las ocho actividades
+pendientes y el README para el resumen de comprobaciones.
+
+Referencias de instalación:
+https://hub.docker.com/r/xlrl/mantisbt
+https://mantisbt.org/docs/master/en-US/Admin_Guide/html/
+Contrastar siempre la documentación con la versión realmente instalada.

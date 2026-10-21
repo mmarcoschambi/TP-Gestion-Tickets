@@ -1,0 +1,26 @@
+services:
+    mantisbt:
+        image: xlrl/mantisbt:latest
+        environment:
+            MANTIS_ENABLE_ADMIN: 1
+        ports:
+            - "127.0.0.1:8989:80"
+        volumes:
+            - mantis_config:/var/www/html/config
+            - ./custom:/var/www/html/custom
+        restart: always
+
+    mysql:
+        image: mariadb:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD en el entorno del proceso}"
+            MYSQL_DATABASE: "${MYSQL_DATABASE:-bugtracker}"
+            MYSQL_USER: "${MYSQL_USER:-mantisbt}"
+            MYSQL_PASSWORD: "${MYSQL_PASSWORD:?Defina MYSQL_PASSWORD en el entorno del proceso}"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        restart: always
+
+volumes:
+    mysql_data:
+    mantis_config:
