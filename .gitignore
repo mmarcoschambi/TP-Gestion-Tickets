@@ -14,3 +14,5 @@
 /src/mantis/*
 !/src/mantis/docker-compose.yml
 !/src/mantis/leame.txt
+!/src/mantis/mailpit-compose.yml
+!/src/mantis/custom_functions_inc.php

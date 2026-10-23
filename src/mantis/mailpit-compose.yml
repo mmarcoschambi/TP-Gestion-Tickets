@@ -1,0 +1,20 @@
+# Captura local aislada; no entrega ni reenvío de correo externo.
+name: tp-gestion-tickets-mail
+services:
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    container_name: tp-gestion-tickets-mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      native:
+        aliases:
+          - tp-mailpit
+networks:
+  native:
+    external: true
+    name: tp-gestion-tickets-native-validation_default
